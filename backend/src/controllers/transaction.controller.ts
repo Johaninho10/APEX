@@ -1,0 +1,108 @@
+import type { Request, Response } from "express";
+import asyncHandler from "express-async-handler";
+import prisma from "../lib/prisma.js";
+import validator from "validator";
+
+type CreateTransactionBody = {
+  title: string;
+  amount: number;
+  category_id: string;
+  date: string;
+};
+
+export const createTransaction = asyncHandler(
+  async (req: Request<{}, unknown, CreateTransactionBody>, res: Response) => {
+    const { user } = req;
+
+    if (!user) {
+      throw new Error();
+    }
+
+    const { title, amount, category_id, date } = req.body;
+
+    if (!title.trim()) {
+      res.status(400);
+      throw new Error("The title is required!");
+    }
+
+    if (isNaN(amount)) {
+      res.status(400);
+      throw new Error("The amount should be a number");
+    }
+
+    if (amount <= 0) {
+      res.status(400);
+      throw new Error("The amount should be greater than 0");
+    }
+
+    if (!category_id.trim()) {
+      res.status(400);
+      console.log(category_id);
+      throw new Error("The category id is required");
+    }
+
+    if (!validator.isDate(date)) {
+      res.status(400);
+      throw new Error("Enter a valid date");
+    }
+
+    const transaction = await prisma.transaction.create({
+      data: {
+        title: title.trim(),
+        amount,
+        category_id,
+        user_id: user.id,
+        date: new Date(date),
+      },
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Transaction created successfully!",
+      transaction,
+    });
+  },
+);
+
+export const deleteTransaction = asyncHandler(
+  async (req: Request<{ id: string }>, res: Response) => {
+    const { user } = req;
+    const { id } = req.params;
+
+    if (!user) {
+      throw new Error();
+    }
+
+    if (!id.trim()) {
+      res.status(400);
+      throw new Error("The transaction id is required");
+    }
+
+    const transaction = await prisma.transaction.findUnique({
+      where: {
+        id,
+      },
+    });
+
+    if (!transaction) {
+      res.status(404);
+      throw new Error("Transaction not found");
+    }
+
+    if (transaction.user_id !== user.id) {
+      res.status(401);
+      throw new Error("You are not allowed to delete this transaction");
+    }
+
+    await prisma.transaction.delete({
+      where: {
+        id,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Transaction deleted successfullsy",
+    });
+  },
+);
