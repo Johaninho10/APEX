@@ -2,12 +2,13 @@ import { Router } from "express";
 import {
   createTransaction,
   deleteTransaction,
+  getTransactions,
 } from "../controllers/transaction.controller.js";
-import authMiddleware from "../middlewares/auth.middleware.js";
 
 const transactionRouter = Router();
 
-transactionRouter.post("/", authMiddleware, createTransaction);
-transactionRouter.delete("/:id", authMiddleware, deleteTransaction);
+transactionRouter.get("/:userId", getTransactions);
+transactionRouter.post("/:userId", createTransaction);
+transactionRouter.delete("/:userId/:id", deleteTransaction);
 
 export default transactionRouter;

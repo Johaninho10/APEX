@@ -3,6 +3,27 @@ import asyncHandler from "express-async-handler";
 import prisma from "../lib/prisma.js";
 import validator from "validator";
 
+export const getTransactions = asyncHandler(
+  async (req: Request<{ userId: string }>, res: Response) => {
+    const { userId } = req.params;
+
+    if (!userId) {
+      throw new Error("The user id is required");
+    }
+
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        user_id: userId,
+      },
+    });
+
+    res.status(200).json({
+      success: true,
+      transactions,
+    });
+  },
+);
+
 type CreateTransactionBody = {
   title: string;
   amount: number;
@@ -11,11 +32,14 @@ type CreateTransactionBody = {
 };
 
 export const createTransaction = asyncHandler(
-  async (req: Request<{}, unknown, CreateTransactionBody>, res: Response) => {
-    const { user } = req;
+  async (
+    req: Request<{ userId: string }, unknown, CreateTransactionBody>,
+    res: Response,
+  ) => {
+    const { userId } = req.params;
 
-    if (!user) {
-      throw new Error();
+    if (!userId) {
+      throw new Error("The user id is required");
     }
 
     const { title, amount, category_id, date } = req.body;
@@ -51,7 +75,7 @@ export const createTransaction = asyncHandler(
         title: title.trim(),
         amount,
         category_id,
-        user_id: user.id,
+        user_id: userId,
         date: new Date(date),
       },
     });
@@ -65,15 +89,15 @@ export const createTransaction = asyncHandler(
 );
 
 export const deleteTransaction = asyncHandler(
-  async (req: Request<{ id: string }>, res: Response) => {
-    const { user } = req;
+  async (req: Request<{ userId: string; id: string }>, res: Response) => {
+    const { userId } = req.params;
     const { id } = req.params;
 
-    if (!user) {
-      throw new Error();
+    if (!userId) {
+      throw new Error("The user id is required");
     }
 
-    if (!id.trim()) {
+    if (!id?.trim()) {
       res.status(400);
       throw new Error("The transaction id is required");
     }
@@ -89,7 +113,7 @@ export const deleteTransaction = asyncHandler(
       throw new Error("Transaction not found");
     }
 
-    if (transaction.user_id !== user.id) {
+    if (transaction.user_id !== userId) {
       res.status(401);
       throw new Error("You are not allowed to delete this transaction");
     }

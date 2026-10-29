@@ -7,7 +7,7 @@ import {
   Modal,
   TouchableOpacity,
 } from "react-native";
-import { useAuth } from "@clerk/expo";
+import { useAuth, useUser } from "@clerk/expo";
 import * as Icons from "@expo/vector-icons";
 import { transactions, Transaction } from "@/assets/assets";
 import Header from "@/components/Header";
@@ -98,18 +98,12 @@ export default function Index() {
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const bottomSheetRef = useRef<BottomSheetMethods>(null);
   const [data, setData] = useState<Transaction[]>([]);
-  const { getToken, isLoaded } = useAuth();
 
-  const generateToken = async () => {
-    const token = await getToken();
-    console.log(token);
-  };
-
-  generateToken();
-
-  useEffect(() => {
-    generateToken();
-  }, []);
+  const {user} = useUser()
+  
+  console.log(user?.id);
+  
+  
 
   useEffect(() => {
     setData(transactions);
