@@ -13,7 +13,7 @@ const Balance = () => {
       translateX: 0,
       opacity: 1
     }}
-    transition={{duration: 1000, type: "timing"}}>
+    transition={{ duration: 1000, type: "timing" } as any}>
       <LinearGradient
                 colors={["#3525cd", "#712ae2"]}
                 style={{

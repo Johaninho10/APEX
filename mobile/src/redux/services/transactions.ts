@@ -9,6 +9,7 @@ const transactionsApi = createApi({
   endpoints: (build) => ({
     fetchTransactions: build.query({
       query: (userId: string) => `/${userId}`,
+      providesTags: ["transactions"],
     }),
     createTransaction: build.mutation({
       query: ({ userId, body }) => ({
@@ -16,12 +17,14 @@ const transactionsApi = createApi({
         method: "POST",
         body,
       }),
+      invalidatesTags: ["transactions"],
     }),
     deleteTransaction: build.mutation({
       query: ({ userId, transactionId }) => ({
         url: `/${userId}/${transactionId}`,
         method: "DELETE",
       }),
+      invalidatesTags: ["transactions"],
     }),
   }),
 });

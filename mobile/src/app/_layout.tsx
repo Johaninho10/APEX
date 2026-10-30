@@ -5,6 +5,7 @@ import "../../global.css";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import store from "@/redux/store";
 import { Provider } from "react-redux";
+import Toast from "react-native-toast-message";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
@@ -18,6 +19,7 @@ export default function RootLayout() {
       <GestureHandlerRootView style={{ flex: 1 }}>
         <Provider store={store}>
           <Slot />
+          <Toast />
         </Provider>
       </GestureHandlerRootView>
     </ClerkProvider>

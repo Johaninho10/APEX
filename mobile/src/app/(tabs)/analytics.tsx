@@ -2,7 +2,7 @@ import MyBarChart from "@/components/MyBarChart";
 import MyDonutChart from "@/components/MyDonutChart";
 import SafeScreen from "@/components/SafeScreen";
 import { useState } from "react";
-import { View, Text, Touchable, TouchableOpacity, ScrollView, Image } from "react-native";
+import { View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
 import {
   BarChart,
   createChartPreset,

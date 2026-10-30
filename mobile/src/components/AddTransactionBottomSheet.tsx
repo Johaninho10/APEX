@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   Pressable,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 import BottomSheet, {
   BottomSheetBackdrop,
@@ -21,47 +22,64 @@ import * as Icons from "@expo/vector-icons";
 import { useFetchCategoriesQuery } from "@/redux/services/categories";
 import { useDispatch, useSelector } from "react-redux";
 import { setCategories } from "@/redux/features/categories";
+import { useCreateTransactionMutation } from "@/redux/services/transactions";
+import { useUser } from "@clerk/expo";
+import Toast from "react-native-toast-message";
 import { Skeleton } from "moti/skeleton";
 
 type IconFamily = keyof typeof Icons;
 
-const AddTransactionBottomeSheet = ({
+const SKELETON_COLORS = ["#E2E8F0", "#F1F5F9", "#E2E8F0"];
+
+const AddTransactionBottomSheet = ({
   bottomSheetRef,
+  onClose,
 }: {
   bottomSheetRef: React.RefObject<BottomSheetMethods | null>;
+  onClose?: () => void;
 }) => {
   const snapPoints = useMemo(() => ["90%"], []);
   const [type, setType] = useState<"expense" | "income">("expense");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [date, setDate] = useState(new Date().toISOString());
   const [activeCategory, setActiveCategory] = useState("");
+  const [title, setTitle] = useState("");
+  const [amount, setAmount] = useState("");
 
+  const { user } = useUser();
   const categories = useSelector((store: Store) => store.categories.categories);
-
   const { data, isLoading } = useFetchCategoriesQuery(null);
   const dispatch = useDispatch();
 
+  const [createTransaction, { isLoading: isCreating }] =
+    useCreateTransactionMutation();
+
   useEffect(() => {
-    if (data) {
-      if (data.success) {
-        dispatch(setCategories(data.categories));
-      }
+    if (data?.success) {
+      dispatch(setCategories(data.categories));
     }
-  }, [data]);
+  }, [data, dispatch]);
+
+  const filteredCategories = useMemo(() => {
+    const list = categories.filter(
+      (cat) => cat.type?.toLowerCase() === type.toLowerCase(),
+    );
+    return list.length > 0 ? list : categories;
+  }, [categories, type]);
 
   const hideDatePicker = () => {
     setDatePickerVisibility(false);
   };
 
-  const handleConfirm = (date: any) => {
+  const handleConfirm = (selectedDate: Date) => {
     hideDatePicker();
-    setDate(date);
+    setDate(selectedDate.toISOString());
   };
 
   const renderBackdrop = useCallback(
     (props: any) => (
       <BottomSheetBackdrop
-        appearsOnIndex={1}
+        appearsOnIndex={0}
         disappearsOnIndex={-1}
         {...props}
       />
@@ -69,31 +87,132 @@ const AddTransactionBottomeSheet = ({
     [],
   );
 
+  const handleAddTransaction = async () => {
+    if (!user?.id) {
+      Toast.show({
+        type: "error",
+        text1: "Authentication Required",
+        text2: "Please sign in to add a transaction.",
+        position: "top",
+      });
+      return;
+    }
+
+    if (!title.trim()) {
+      Toast.show({
+        type: "error",
+        text1: "Description Missing",
+        text2: "Please enter a description for the transaction.",
+        position: "top",
+      });
+      return;
+    }
+
+    const numericAmount = parseFloat(amount);
+    if (!amount.trim() || isNaN(numericAmount) || numericAmount <= 0) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid Amount",
+        text2: "Please enter a valid amount greater than 0.",
+        position: "top",
+      });
+      return;
+    }
+
+    if (!activeCategory) {
+      Toast.show({
+        type: "error",
+        text1: "Category Missing",
+        text2: "Please select a category.",
+        position: "top",
+      });
+      return;
+    }
+
+    try {
+      await createTransaction({
+        userId: user.id,
+        body: {
+          title: title.trim(),
+          amount: numericAmount,
+          category_id: activeCategory,
+          date: new Date(date).toISOString(),
+        },
+      }).unwrap();
+
+      Toast.show({
+        type: "success",
+        text1: "Transaction Created!",
+        text2: `${type === "expense" ? "Expense" : "Income"} of $${numericAmount.toFixed(2)} added successfully.`,
+        position: "top",
+      });
+
+      // Reset form
+      setTitle("");
+      setAmount("");
+      setActiveCategory("");
+      setDate(new Date().toISOString());
+
+      // Close bottom sheet
+      bottomSheetRef?.current?.close();
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Failed to Add Transaction",
+        text2:
+          error?.data?.message ||
+          error?.message ||
+          "An error occurred while saving the transaction.",
+        position: "top",
+      });
+    }
+  };
+
   const renderCategory = ({ item }: { item: Category }) => {
     const Icon = Icons[item.icon_family as IconFamily];
+    const isSelected = activeCategory === item.id;
     return (
-        <View className="items-center gap-y-2">
-          <Pressable
-            className={`w-16 h-16 rounded-full  gap-x-2 justify-center items-center ${activeCategory === item.id && "border-2 border-primary/60"}`}
-            style={{ backgroundColor: item.background }}
-            onPress={() => setActiveCategory(item.id)}
-          >
+      <View className="items-center gap-y-2">
+        <Pressable
+          className={`w-16 h-16 rounded-full gap-x-2 justify-center items-center ${
+            isSelected ? "border-[2px] border-primary/60" : ""
+          }`}
+          style={{ backgroundColor: item.background }}
+          onPress={() => setActiveCategory(item.id)}
+        >
+          {Icon ? (
             <Icon
               name={item.icon_name}
               color={item.foreground}
               className="!text-3xl"
             />
-          </Pressable>
-          <Text className="text-[12px] text-slate-600">{item.name}</Text>
-        </View>
+          ) : (
+            <Ionicons name="pricetag" size={28} color={item.foreground} />
+          )}
+        </Pressable>
+        <Text
+          className={`text-[12px] ${
+            isSelected ? "text-primary font-bold" : "text-slate-600"
+          }`}
+        >
+          {item.name}
+        </Text>
+      </View>
     );
   };
 
   const renderSkeleton = () => {
-    return <Skeleton width={64} height={64} radius={"round"} colorMode="light"></Skeleton>
-  }
+    return (
+      <Skeleton
+        width={64}
+        height={64}
+        radius="round"
+        colorMode="light"
+        colors={SKELETON_COLORS}
+      />
+    );
+  };
 
-  // renders
   return (
     <BottomSheet
       handleStyle={{
@@ -109,11 +228,14 @@ const AddTransactionBottomeSheet = ({
         borderRadius: 40,
       }}
       snapPoints={snapPoints}
-      index={1}
+      index={0}
+      onClose={onClose}
     >
       <BottomSheetView style={styles.contentContainer}>
         <View className="flex-row justify-between items-center">
-          <Text className="text-xl">Add Transaction</Text>
+          <Text className="text-xl font-bold text-slate-800">
+            Add Transaction
+          </Text>
           <TouchableOpacity
             className="bg-slate-200/50 w-12 h-12 rounded-full flex justify-center items-center"
             activeOpacity={0.2}
@@ -125,7 +247,9 @@ const AddTransactionBottomeSheet = ({
 
         <View className="mt-6 bg-slate-200/50 py-2 px-2 rounded-2xl flex-row gap-x-1">
           <TouchableOpacity
-            className={`${type === "expense" ? "bg-red-500" : "bg-transparent"} py-4 flex-1 rounded-xl flex justify-center items-center transition-all duration-300`}
+            className={`${
+              type === "expense" ? "bg-red-500" : "bg-transparent"
+            } py-4 flex-1 rounded-xl flex justify-center items-center transition-all duration-300`}
             activeOpacity={0.8}
             onPress={() => {
               setActiveCategory("");
@@ -133,13 +257,18 @@ const AddTransactionBottomeSheet = ({
             }}
           >
             <Text
-              className={`text-xl ${type === "expense" ? "text-white" : "text-slate-500"}  font-medium`}
+              className={`text-xl ${
+                type === "expense" ? "text-white" : "text-slate-500"
+              } font-medium`}
             >
               Expense
             </Text>
           </TouchableOpacity>
+
           <TouchableOpacity
-            className={`${type === "income" ? "bg-emerald-500" : "bg-transparent"} py-4 flex-1 rounded-xl flex justify-center items-center transition-all duration-300`}
+            className={`${
+              type === "income" ? "bg-emerald-500" : "bg-transparent"
+            } py-4 flex-1 rounded-xl flex justify-center items-center transition-all duration-300`}
             activeOpacity={0.8}
             onPress={() => {
               setActiveCategory("");
@@ -147,7 +276,9 @@ const AddTransactionBottomeSheet = ({
             }}
           >
             <Text
-              className={`text-xl ${type === "income" ? "text-white" : "text-slate-500"}  font-medium`}
+              className={`text-xl ${
+                type === "income" ? "text-white" : "text-slate-500"
+              } font-medium`}
             >
               Income
             </Text>
@@ -157,8 +288,10 @@ const AddTransactionBottomeSheet = ({
         <View style={{ marginTop: 20 }}>
           <Text style={{ fontSize: 18, marginBottom: 10 }}>Categories</Text>
           <FlatList
-            data={!isLoading ? categories : new Array(10).fill(0)}
-            keyExtractor={(item: Category, index) => !isLoading ? item.id : String(index)}
+            data={!isLoading ? filteredCategories : new Array(6).fill(0)}
+            keyExtractor={(item: Category, index) =>
+              !isLoading ? item.id : String(index)
+            }
             renderItem={!isLoading ? renderCategory : renderSkeleton}
             contentContainerStyle={{
               columnGap: 20,
@@ -167,13 +300,16 @@ const AddTransactionBottomeSheet = ({
             showsHorizontalScrollIndicator={false}
           />
         </View>
+
         <View className="gap-y-4 mt-6">
           <View className="gap-y-1">
-            <Text className="text-xl">Description</Text>
+            <Text className="text-xl">Title</Text>
             <BottomSheetTextInput
               className="w-full bg-slate-200/50 py-4 px-4 rounded-lg text-[18px] text-slate-600"
               placeholder="Enter description"
               returnKeyType="done"
+              value={title}
+              onChangeText={setTitle}
             />
           </View>
 
@@ -182,8 +318,10 @@ const AddTransactionBottomeSheet = ({
             <BottomSheetTextInput
               className="w-full bg-slate-200/50 py-4 px-4 rounded-lg text-[18px] text-slate-600"
               placeholder="0.00"
-              keyboardType="numeric"
+              keyboardType="decimal-pad"
               returnKeyType="done"
+              value={amount}
+              onChangeText={setAmount}
             />
           </View>
 
@@ -213,6 +351,8 @@ const AddTransactionBottomeSheet = ({
             style={{
               elevation: 10,
             }}
+            onPress={handleAddTransaction}
+            disabled={isCreating}
           >
             <LinearGradient
               colors={["#3525cd", "#712ae2"]}
@@ -226,15 +366,21 @@ const AddTransactionBottomeSheet = ({
               end={{ x: 1, y: 1 }}
             >
               <View className="py-3 flex-row justify-center items-center gap-x-4">
-                <Text className="text-white text-2xl text-center font-medium">
-                  Add Transaction
-                </Text>
-                <Ionicons
-                  name="add"
-                  size={24}
-                  color="white"
-                  className="!ext-2xl"
-                />
+                {isCreating ? (
+                  <ActivityIndicator color="white" size="small" />
+                ) : (
+                  <>
+                    <Text className="text-white text-2xl text-center font-medium">
+                      Add Transaction
+                    </Text>
+                    <Ionicons
+                      name="add"
+                      size={24}
+                      color="white"
+                      className="!text-2xl"
+                    />
+                  </>
+                )}
               </View>
             </LinearGradient>
           </TouchableOpacity>
@@ -255,4 +401,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default AddTransactionBottomeSheet;
+export default AddTransactionBottomSheet;

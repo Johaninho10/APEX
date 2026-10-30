@@ -1,14 +1,17 @@
-import { View, Text, TouchableOpacity } from 'react-native'
-import { LinearGradient } from 'expo-linear-gradient';
-import { AntDesign } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { BottomSheetMethods } from '@gorhom/bottom-sheet/lib/typescript/types';
-import BottomSheet from '@gorhom/bottom-sheet';
+import { View, Text, TouchableOpacity } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { AntDesign } from "@expo/vector-icons";
+import React, { useState } from "react";
+import { BottomSheetMethods } from "@gorhom/bottom-sheet/lib/typescript/types";
 
-const TabsSection = ({bottomSheetRef, showBottomSheet}: {bottomSheetRef: React.RefObject<BottomSheetMethods | null>, showBottomSheet: () => void}) => {
-      const [active, setActive] = useState<"all" | "expenses" | "incomes">(
-        "all",
-      );
+const TabsSection = ({
+  bottomSheetRef,
+  showBottomSheet,
+}: {
+  bottomSheetRef: React.RefObject<BottomSheetMethods | null>;
+  showBottomSheet: () => void;
+}) => {
+  const [active, setActive] = useState<"all" | "expenses" | "incomes">("all");
 
   return (
     <View className="mb-5">
@@ -21,9 +24,9 @@ const TabsSection = ({bottomSheetRef, showBottomSheet}: {bottomSheetRef: React.R
           className="w-14 h-14 rounded-full overflow-hidden"
           activeOpacity={0.8}
           onPress={() => {
-            showBottomSheet()
-            bottomSheetRef?.current?.snapToIndex(1)}
-          }
+            showBottomSheet();
+            bottomSheetRef?.current?.expand();
+          }}
         >
           <LinearGradient
             colors={["#3525cd", "#712ae2"]}
@@ -78,6 +81,6 @@ const TabsSection = ({bottomSheetRef, showBottomSheet}: {bottomSheetRef: React.R
       </View>
     </View>
   );
-}
+};
 
-export default TabsSection
+export default TabsSection;

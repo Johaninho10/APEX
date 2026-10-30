@@ -31,7 +31,7 @@ type CreateTransactionBody = {
   title: string;
   amount: number;
   category_id: string;
-  date: string;
+  date: Date;
 };
 
 export const createTransaction = asyncHandler(
@@ -79,7 +79,7 @@ export const createTransaction = asyncHandler(
         amount,
         category_id,
         user_id: userId,
-        date: new Date(date),
+        date: date,
       },
     });
 
