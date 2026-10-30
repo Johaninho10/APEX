@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Pressable,
+  FlatList,
 } from "react-native";
 import BottomSheet, {
   BottomSheetBackdrop,
@@ -15,9 +16,12 @@ import { BottomSheetMethods } from "@gorhom/bottom-sheet/lib/typescript/types";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { LinearGradient } from "expo-linear-gradient";
-import { categories, Category } from "@/assets/assets";
-import { FlatList } from "react-native-gesture-handler";
+import { Store, Category } from "../../types/global";
 import * as Icons from "@expo/vector-icons";
+import { useFetchCategoriesQuery } from "@/redux/services/categories";
+import { useDispatch, useSelector } from "react-redux";
+import { setCategories } from "@/redux/features/categories";
+import { Skeleton } from "moti/skeleton";
 
 type IconFamily = keyof typeof Icons;
 
@@ -31,11 +35,19 @@ const AddTransactionBottomeSheet = ({
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [date, setDate] = useState(new Date().toISOString());
   const [activeCategory, setActiveCategory] = useState("");
-  const [data, setData] = useState<Category[]>([]);
+
+  const categories = useSelector((store: Store) => store.categories.categories);
+
+  const { data, isLoading } = useFetchCategoriesQuery(null);
+  const dispatch = useDispatch();
 
   useEffect(() => {
-    setData(categories.filter((item) => item.type === type));
-  }, [type]);
+    if (data) {
+      if (data.success) {
+        dispatch(setCategories(data.categories));
+      }
+    }
+  }, [data]);
 
   const hideDatePicker = () => {
     setDatePickerVisibility(false);
@@ -58,24 +70,28 @@ const AddTransactionBottomeSheet = ({
   );
 
   const renderCategory = ({ item }: { item: Category }) => {
-    const Icon = Icons[item.iconFamily as IconFamily];
+    const Icon = Icons[item.icon_family as IconFamily];
     return (
-      <View className="items-center gap-y-2">
-        <Pressable
-          className={`w-16 h-16 rounded-full  gap-x-2 justify-center items-center ${activeCategory === item.id && "border-2 border-primary/60"}`}
-          style={{ backgroundColor: item.backgroundColor }}
-          onPress={() => setActiveCategory(item.id)}
-        >
-          <Icon
-            name={item.iconName}
-            color={item.foregroundColor}
-            className="!text-3xl"
-          />
-        </Pressable>
-        <Text className="text-[12px] text-slate-600">{item.name}</Text>
-      </View>
+        <View className="items-center gap-y-2">
+          <Pressable
+            className={`w-16 h-16 rounded-full  gap-x-2 justify-center items-center ${activeCategory === item.id && "border-2 border-primary/60"}`}
+            style={{ backgroundColor: item.background }}
+            onPress={() => setActiveCategory(item.id)}
+          >
+            <Icon
+              name={item.icon_name}
+              color={item.foreground}
+              className="!text-3xl"
+            />
+          </Pressable>
+          <Text className="text-[12px] text-slate-600">{item.name}</Text>
+        </View>
     );
   };
+
+  const renderSkeleton = () => {
+    return <Skeleton width={64} height={64} radius={"round"} colorMode="light"></Skeleton>
+  }
 
   // renders
   return (
@@ -126,8 +142,9 @@ const AddTransactionBottomeSheet = ({
             className={`${type === "income" ? "bg-emerald-500" : "bg-transparent"} py-4 flex-1 rounded-xl flex justify-center items-center transition-all duration-300`}
             activeOpacity={0.8}
             onPress={() => {
-              setActiveCategory("")
-              setType("income")}}
+              setActiveCategory("");
+              setType("income");
+            }}
           >
             <Text
               className={`text-xl ${type === "income" ? "text-white" : "text-slate-500"}  font-medium`}
@@ -140,9 +157,9 @@ const AddTransactionBottomeSheet = ({
         <View style={{ marginTop: 20 }}>
           <Text style={{ fontSize: 18, marginBottom: 10 }}>Categories</Text>
           <FlatList
-            data={data}
-            keyExtractor={(item) => item.id}
-            renderItem={renderCategory}
+            data={!isLoading ? categories : new Array(10).fill(0)}
+            keyExtractor={(item: Category, index) => !isLoading ? item.id : String(index)}
+            renderItem={!isLoading ? renderCategory : renderSkeleton}
             contentContainerStyle={{
               columnGap: 20,
             }}

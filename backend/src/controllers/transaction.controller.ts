@@ -15,6 +15,9 @@ export const getTransactions = asyncHandler(
       where: {
         user_id: userId,
       },
+      include: {
+        category: true
+      }
     });
 
     res.status(200).json({

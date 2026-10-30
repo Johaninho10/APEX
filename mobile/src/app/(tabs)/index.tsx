@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { useAuth, useUser } from "@clerk/expo";
 import * as Icons from "@expo/vector-icons";
-import { transactions, Transaction } from "@/assets/assets";
+
 import Header from "@/components/Header";
 import Balance from "@/components/Balance";
 import TabsSection from "@/components/TabsSection";
@@ -19,6 +19,11 @@ type IconFamily = keyof typeof Icons;
 import { useEffect, useRef, useState } from "react";
 import { BottomSheetMethods } from "@gorhom/bottom-sheet/lib/typescript/types";
 import EmptyElement from "@/components/EmptyElement";
+import { useFetchCategoriesQuery } from "@/redux/services/categories";
+import { useSelector, useDispatch } from "react-redux";
+import type { Store, Transaction } from "../../../types/global";
+import { setTransactions } from "@/redux/features/transactions";
+import { useFetchTransactionsQuery } from "@/redux/services/transactions";
 
 const RenderItem = ({
   item,
@@ -27,7 +32,7 @@ const RenderItem = ({
   item: Transaction;
   deleteTransaction: () => void;
 }) => {
-  const Icon = Icons[item.iconFamily as IconFamily];
+  const Icon = Icons[item.category.icon_family as IconFamily];
   return (
     <MotiView
       from={{
@@ -48,12 +53,12 @@ const RenderItem = ({
       <View className="flex-row gap-x-4 items-center">
         <View
           className="w-14 h-14 rounded-full  gap-x-2 justify-center items-center"
-          style={{ backgroundColor: item.backgroundColor }}
+          style={{ backgroundColor: item.category.background }}
         >
           <Icon
-            name={item.iconName}
+            name={item.category.icon_name}
             className="!text-3xl"
-            color={item.foregroundColor}
+            color={item.category.foreground}
           />
         </View>
         <View className="justify-between">
@@ -97,22 +102,34 @@ const RenderItem = ({
 export default function Index() {
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const bottomSheetRef = useRef<BottomSheetMethods>(null);
-  const [data, setData] = useState<Transaction[]>([]);
+  const transactions = useSelector(
+    (store: Store) => store.transactions.transactions,
+  );
+  const { user } = useUser();
 
-  const {user} = useUser()
+  if (!user) {
+    return null;
+  }
+
+  const dispatch = useDispatch();
+
   
-  console.log(user?.id);
-  
-  
+
+  const { data, isLoading } = useFetchTransactionsQuery(user.id);
+
 
   useEffect(() => {
-    setData(transactions);
-  }, []);
+    if (data) {
+      if (data.success) {
+        dispatch(setTransactions(data.transactions));
+      }
+    }
+  }, [data]);
 
   return (
     <View className="flex-1">
       <FlatList
-        data={data}
+        data={transactions}
         keyExtractor={(item) => item.id}
         ListEmptyComponent={EmptyElement}
         ListHeaderComponent={() => (
@@ -129,8 +146,12 @@ export default function Index() {
           <RenderItem
             item={item}
             deleteTransaction={() =>
-              setData((prev) =>
-                prev.filter((transaction) => transaction.id !== item.id),
+              dispatch(
+                setTransactions(
+                  transactions.filter(
+                    (transaction) => transaction.id !== item.id,
+                  ),
+                ),
               )
             }
           />

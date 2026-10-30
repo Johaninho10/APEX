@@ -6,7 +6,7 @@ const Balance = () => {
   return (
     <MotiView
     from={{
-      translateX: -20,
+      translateX: -40,
       opacity: 0
     }}
     animate={{

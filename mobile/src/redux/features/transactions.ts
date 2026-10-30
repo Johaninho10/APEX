@@ -1,36 +1,16 @@
-import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
+import { createSlice } from "@reduxjs/toolkit";
 
-const baseUrl = process.env.EXPO_API_URL + "/transaction";
-
-const transactionsApi = createApi({
-  reducerPath: "transactionsApi",
-  tagTypes: ["transactions"],
-  baseQuery: fetchBaseQuery({ baseUrl }),
-  endpoints: (build) => ({
-    fetchTransactions: build.query({
-      query: (userId: string) => `/${userId}`,
-      providesTags: ["transactions"],
-    }),
-    createTransaction: build.mutation({
-      query: ({ userId, body }) => ({
-        url: `/${userId}`,
-        method: "POST",
-        body,
-      }),
-    }),
-    deleteTransaction: build.mutation({
-      query: ({ userId, transactionId }) => ({
-        url: `/${userId}/${transactionId}`,
-        method: "DELETE",
-      }),
-    }),
-  }),
+const transactionsSlice = createSlice({
+  name: "transactions",
+  initialState: {
+    transactions: [],
+  },
+  reducers: {
+    setTransactions: (state, { payload }) => {
+      state.transactions = payload;
+    },
+  },
 });
 
-export const {
-  useFetchTransactionsQuery,
-  useCreateTransactionMutation,
-  useDeleteTransactionMutation,
-} = transactionsApi;
-
-export default transactionsApi
+export const { setTransactions } = transactionsSlice.actions;
+export default transactionsSlice;
