@@ -39,10 +39,10 @@ export const getTransactions = asyncHandler(
     const take = 10;
 
     const total = await prisma.transaction.count({
-      where
-    })
+      where,
+    });
 
-    const totalPages = Math.ceil(total / take)
+    const totalPages = Math.ceil(total / take);
 
     const transactions = await prisma.transaction.findMany({
       where,
@@ -52,8 +52,8 @@ export const getTransactions = asyncHandler(
       take,
       skip: (Number(page) - 1) * take,
       orderBy: {
-        date: "desc"
-      }
+        date: "desc",
+      },
     });
 
     res.status(200).json({
@@ -61,7 +61,7 @@ export const getTransactions = asyncHandler(
       transactions,
       total,
       page,
-      totalPages
+      totalPages,
     });
   },
 );
@@ -214,5 +214,37 @@ export const getSummary = asyncHandler(
       expenses,
       balance,
     });
+  },
+);
+
+export const clearTransactions = asyncHandler(
+  async (req: Request<{ userId: string }>, res: Response) => {
+    const { userId } = req.params;
+
+    if (!userId) {
+      res.status(400);
+      throw new Error("The user id is required!");
+    }
+
+    const count = await prisma.transaction.count({
+      where: {
+        user_id: userId
+      }
+    })
+
+    if(count > 0) {
+      await prisma.transaction.deleteMany({
+        where: {
+          user_id: userId
+        }
+      })
+    }
+
+    res.status(200).json({
+      sucess: true,
+      message: "All transactions have been deleted",
+      count
+    })
+    
   },
 );

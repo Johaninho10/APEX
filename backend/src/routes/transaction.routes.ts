@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  clearTransactions,
   createTransaction,
   deleteTransaction,
   getSummary,
@@ -12,5 +13,6 @@ transactionRouter.get("/:userId", getTransactions);
 transactionRouter.get("/summary/:userId", getSummary);
 transactionRouter.post("/:userId", createTransaction);
 transactionRouter.delete("/:userId/:id", deleteTransaction);
+transactionRouter.delete("/:userId", clearTransactions);
 
 export default transactionRouter;
