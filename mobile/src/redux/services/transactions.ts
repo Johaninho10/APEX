@@ -8,7 +8,8 @@ const transactionsApi = createApi({
   baseQuery: fetchBaseQuery({ baseUrl }),
   endpoints: (build) => ({
     fetchTransactions: build.query({
-      query: ({userId, page} : {userId: string, page?: string}) => page ? `/${userId}?page=${page}` : `/${userId}`,
+      query: ({ userId, page = 1, type }: { userId: string; page?: number, type: "EXPENSE" | "INCOME" | "" }) =>
+        `/${userId}?page=${page}&type=${type}`,
       providesTags: ["transactions"],
     }),
     getSummary: build.query({

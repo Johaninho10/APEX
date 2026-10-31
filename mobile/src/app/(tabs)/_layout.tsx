@@ -30,13 +30,6 @@ const TabsLayout = () => {
         <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="analytics">
-        <NativeTabs.Trigger.Icon
-          src={<VectorIcon family={Ionicons} name="bar-chart" />}
-        />
-        <NativeTabs.Trigger.Label>Analytics</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-
       <NativeTabs.Trigger name="settings">
         <NativeTabs.Trigger.Icon
           src={<VectorIcon family={Ionicons} name="settings" />}

@@ -33,7 +33,7 @@ export default function Index() {
   const [showBottomSheet, setShowBottomSheet] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [type, setType] = useState<"EXPENSE" | "INCOME" | "">("")
   const bottomSheetRef = useRef<BottomSheetMethods>(null);
   const transactions = useSelector(
     (store: Store) => store.transactions.transactions,
@@ -42,8 +42,8 @@ export default function Index() {
   const { user, isLoaded } = useUser();
   const dispatch = useDispatch();
 
-  const { data, isLoading, isFetching, refetch } = useFetchTransactionsQuery(
-    { userId: user?.id ?? "" },
+  const { currentData: data, isLoading, isFetching, refetch } = useFetchTransactionsQuery(
+    { userId: user?.id ?? "", page, type },
     {
       skip: !user?.id,
     },
@@ -56,9 +56,13 @@ export default function Index() {
 
   useEffect(() => {
     if (data?.success) {
-      console.log(data);
-      setTotalPages(data.total);
-      dispatch(setTransactions(data.transactions));
+      setTotalPages(data.totalPages);
+      if (page === 1) {
+        dispatch(setTransactions(data.transactions));
+      } else {
+        const existingIds = transactions.map((transaction: Transaction) => transaction.id)
+        dispatch(setTransactions([...transactions, ...data.transactions.filter((item : Transaction) => !existingIds.includes(item.id))]))
+      }
     }
   }, [data, dispatch]);
 
@@ -80,15 +84,9 @@ export default function Index() {
     }
   };
 
-  const loadMore = async () => {
-    try {
-      if (!hasMore) return;
-      setPage((prev) => prev + 1);
-      if (page === totalPages) {
-        setHasMore(false);
-      }
-      // console.log(totalPages);
-    } catch (error) {}
+  const loadMore = () => {
+    if (!user?.id || isLoading || isFetching || page >= totalPages) return;
+    setPage((currentPage) => currentPage + 1);
   };
 
   const renderSkeleton = () => {
@@ -223,9 +221,9 @@ export default function Index() {
           }
           ListEmptyComponent={EmptyElement}
           onEndReached={loadMore}
-          onEndReachedThreshold={0.5}
+          onEndReachedThreshold={0}
           ListFooterComponent={
-            isLoading ? <View className="justify-center w-full">
+            isFetching ? <View className="justify-center w-full">
               <ActivityIndicator />
             </View> : <></>
           }
@@ -236,6 +234,9 @@ export default function Index() {
               <TabsSection
                 bottomSheetRef={bottomSheetRef}
                 showBottomSheet={() => setShowBottomSheet(true)}
+                type={type}
+                changeType={(str: "" | "EXPENSE" | "INCOME") => setType(str)}
+                changePage={(num: number) => setPage(num)}
               />
             </>
           )}
@@ -262,16 +263,3 @@ export default function Index() {
     </View>
   );
 }
-
-{
-  /*  */
-}
-
-//
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-});

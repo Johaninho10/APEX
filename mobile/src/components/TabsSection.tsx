@@ -7,12 +7,16 @@ import { BottomSheetMethods } from "@gorhom/bottom-sheet/lib/typescript/types";
 const TabsSection = ({
   bottomSheetRef,
   showBottomSheet,
+  type,
+  changeType,
+  changePage,
 }: {
   bottomSheetRef: React.RefObject<BottomSheetMethods | null>;
   showBottomSheet: () => void;
+  type: string;
+  changeType: (type: "EXPENSE" | "INCOME" | "") => void;
+  changePage: (num: number) => void;
 }) => {
-  const [active, setActive] = useState<"all" | "expenses" | "incomes">("all");
-
   return (
     <View className="mb-5">
       <View className="mt-5 flex-row justify-between items-center">
@@ -44,36 +48,40 @@ const TabsSection = ({
       </View>
       <View className="flex-row items-center gap-x-4">
         <TouchableOpacity
-          className={`${active === "all" ? "bg-primary" : "bg-white"} py-2 px-6 rounded-full`}
-          onPress={() => setActive("all")}
+          className={`${type === "" ? "bg-primary" : "bg-white"} py-2 px-6 rounded-full`}
+          onPress={() => changeType("")}
           style={{ boxShadow: "0px 0px 5px rgba(0,0,0,0.1)", elevation: 1 }}
         >
-          <Text
-            className={`${active === "all" ? "text-white" : "text-slate-700"}`}
-          >
+          <Text className={`${type === "" ? "text-white" : "text-slate-700"}`}>
             All
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          className={`${active === "incomes" ? "bg-primary" : "bg-white"} py-2 px-6 rounded-full`}
-          onPress={() => setActive("incomes")}
+          className={`${type === "INCOME" ? "bg-primary" : "bg-white"} py-2 px-6 rounded-full`}
+          onPress={() => {
+            changePage(1);
+            changeType("INCOME");
+          }}
           style={{ boxShadow: "0px 0px 5px rgba(0,0,0,0.1)", elevation: 1 }}
         >
           <Text
-            className={`${active === "incomes" ? "text-white" : "text-slate-700"}`}
+            className={`${type === "INCOME" ? "text-white" : "text-slate-700"}`}
           >
             Incomes
           </Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          className={`${active === "expenses" ? "bg-primary" : "bg-white"} py-2 px-6 rounded-full`}
-          onPress={() => setActive("expenses")}
+          className={`${type === "EXPENSE" ? "bg-primary" : "bg-white"} py-2 px-6 rounded-full`}
+          onPress={() => {
+            changePage(1)
+            changeType("EXPENSE");
+          }}
           style={{ boxShadow: "0px 0px 5px rgba(0,0,0,0.1)", elevation: 1 }}
         >
           <Text
-            className={`${active === "expenses" ? "text-white" : "text-slate-700"}`}
+            className={`${type === "EXPENSE" ? "text-white" : "text-slate-700"}`}
           >
             Expenses
           </Text>
