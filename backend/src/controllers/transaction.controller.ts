@@ -4,25 +4,57 @@ import prisma from "../lib/prisma.js";
 import validator from "validator";
 
 export const getTransactions = asyncHandler(
-  async (req: Request<{ userId: string }>, res: Response) => {
+  async (
+    req: Request<
+      { userId: string },
+      unknown,
+      unknown,
+      { page?: string; type?: "EXPENSE" | "INCOME" }
+    >,
+    res: Response,
+  ) => {
     const { userId } = req.params;
+    const { page = "1", type } = req.query;
 
     if (!userId) {
       throw new Error("The user id is required");
     }
 
+    if (isNaN(Number(page))) {
+      res.status(400);
+      throw new Error("Invalid page format!");
+    }
+
+    const where: any = { user_id: userId };
+
+    if (type) {
+      if (type !== "EXPENSE" && type !== "INCOME") {
+        res.status(400);
+        throw new Error("Invalid type value");
+      }
+
+      where.category = { type };
+    }
+
+    const take = 10;
+
     const transactions = await prisma.transaction.findMany({
-      where: {
-        user_id: userId,
-      },
+      where,
       include: {
         category: true,
       },
+      take,
+      skip: (Number(page) - 1) * take,
+      orderBy: {
+        date: "desc"
+      }
     });
 
     res.status(200).json({
       success: true,
       transactions,
+      total: transactions.length,
+      page,
     });
   },
 );

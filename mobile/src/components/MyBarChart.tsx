@@ -1,16 +1,21 @@
 import { useState } from "react";
 import { BarChart } from "react-native-chart-kit/v2";
+import { Dimensions } from "react-native";
 
 const MyBarChart = ({
   data,
+  width,
 }: {
   data: {
     day: string;
     organic: number;
     paid: number;
   }[];
+  width?: number;
 }) => {
   const [selectedChannel, setSelectedChannel] = useState("");
+  const screenWidth = Dimensions.get("window").width;
+  const chartWidth = width ?? Math.max(screenWidth - 80, 300);
 
   return (
     <BarChart
@@ -19,8 +24,8 @@ const MyBarChart = ({
       visiblePoints={7}
       xKey="day"
       series={[
-        { yKey: "organic", label: "Organic", color: "#34d399" },
-        { yKey: "paid", label: "Paid", color: "#f87171" },
+        { yKey: "organic", label: "Income", color: "#10b981" },
+        { yKey: "paid", label: "Expense", color: "#ef4444" },
       ]}
       interaction={{
         mode: "tap",
@@ -34,8 +39,8 @@ const MyBarChart = ({
         placement: "above",
         width: 132,
       }}
-      width={400}
-      height={260}
+      width={chartWidth}
+      height={240}
     />
   );
 };

@@ -173,10 +173,10 @@ export default function Index() {
           <Text
             className={`font-medium`}
             style={{
-              color: item.amount > 0 ? "#10b981" : "#ef4444",
+              color: item.category.type === "INCOME" ? "#10b981" : "#ef4444",
             }}
           >
-            $ {item.amount}
+            {item.category.type === "EXPENSE" && "-"}${item.amount}
           </Text>
 
           <TouchableOpacity
@@ -200,7 +200,9 @@ export default function Index() {
         <FlatList
           data={isTransactionsLoading ? new Array(6).fill(0) : transactions}
           keyExtractor={(item, index) =>
-            isTransactionsLoading ? `skeleton-${index}` : (item?.id ?? String(index))
+            isTransactionsLoading
+              ? `skeleton-${index}`
+              : (item?.id ?? String(index))
           }
           ListEmptyComponent={EmptyElement}
           ListHeaderComponent={() => (

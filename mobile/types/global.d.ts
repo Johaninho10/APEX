@@ -1,7 +1,7 @@
 export interface Category {
   id: string;
   name: string;
-  type: "income" | "expense";
+  type: "INCOME" | "EXPENSE";
   icon_family: string;
   icon_name: string;
   background: string;

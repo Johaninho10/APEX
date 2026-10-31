@@ -4,12 +4,16 @@ const baseUrl = process.env.EXPO_PUBLIC_API_URL + "/transaction";
 
 const transactionsApi = createApi({
   reducerPath: "transactionsApi",
-  tagTypes: ["transactions"],
+  tagTypes: ["transactions", "summary"],
   baseQuery: fetchBaseQuery({ baseUrl }),
   endpoints: (build) => ({
     fetchTransactions: build.query({
       query: (userId: string) => `/${userId}`,
       providesTags: ["transactions"],
+    }),
+    getSummary: build.query({
+      query: (userId: string) => `/summary/${userId}`,
+      providesTags: ["summary"]
     }),
     createTransaction: build.mutation({
       query: ({ userId, body }) => ({
@@ -17,20 +21,21 @@ const transactionsApi = createApi({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["transactions"],
+      invalidatesTags: ["transactions", "summary"],
     }),
     deleteTransaction: build.mutation({
       query: ({ userId, transactionId }) => ({
         url: `/${userId}/${transactionId}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["transactions"],
+      invalidatesTags: ["transactions", "summary"],
     }),
   }),
 });
 
 export const {
   useFetchTransactionsQuery,
+  useGetSummaryQuery,
   useCreateTransactionMutation,
   useDeleteTransactionMutation,
 } = transactionsApi;
