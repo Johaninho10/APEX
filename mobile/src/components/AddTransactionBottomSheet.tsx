@@ -41,7 +41,7 @@ const AddTransactionBottomSheet = ({
   const snapPoints = useMemo(() => ["90%"], []);
   const [type, setType] = useState<"expense" | "income">("expense");
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [date, setDate] = useState(new Date().toISOString());
+  const [date, setDate] = useState(new Date());
   const [activeCategory, setActiveCategory] = useState("");
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
@@ -73,7 +73,7 @@ const AddTransactionBottomSheet = ({
 
   const handleConfirm = (selectedDate: Date) => {
     hideDatePicker();
-    setDate(selectedDate.toISOString());
+    setDate(selectedDate);
   };
 
   const renderBackdrop = useCallback(
@@ -151,7 +151,7 @@ const AddTransactionBottomSheet = ({
       setTitle("");
       setAmount("");
       setActiveCategory("");
-      setDate(new Date().toISOString());
+      setDate(new Date());
 
       // Close bottom sheet
       bottomSheetRef?.current?.close();

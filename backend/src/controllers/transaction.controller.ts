@@ -16,8 +16,8 @@ export const getTransactions = asyncHandler(
         user_id: userId,
       },
       include: {
-        category: true
-      }
+        category: true,
+      },
     });
 
     res.status(200).json({
@@ -31,7 +31,7 @@ type CreateTransactionBody = {
   title: string;
   amount: number;
   category_id: string;
-  date: Date;
+  date: string;
 };
 
 export const createTransaction = asyncHandler(
@@ -68,7 +68,7 @@ export const createTransaction = asyncHandler(
       throw new Error("The category id is required");
     }
 
-    if (!validator.isDate(date)) {
+    if (!validator.isISO8601(date) && !validator.isDate(date)) {
       res.status(400);
       throw new Error("Enter a valid date");
     }
@@ -79,7 +79,10 @@ export const createTransaction = asyncHandler(
         amount,
         category_id,
         user_id: userId,
-        date: date,
+        date: new Date(date),
+      },
+      include: {
+        category: true,
       },
     });
 
