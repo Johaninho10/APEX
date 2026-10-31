@@ -42,6 +42,8 @@ export const getTransactions = asyncHandler(
       where
     })
 
+    const totalPages = Math.ceil(total / take)
+
     const transactions = await prisma.transaction.findMany({
       where,
       include: {
@@ -59,6 +61,7 @@ export const getTransactions = asyncHandler(
       transactions,
       total,
       page,
+      totalPages
     });
   },
 );

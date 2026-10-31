@@ -56,8 +56,7 @@ export default function Index() {
 
   useEffect(() => {
     if (data?.success) {
-      console.log(data.transactions);
-      
+      console.log(data);
       setTotalPages(data.total);
       dispatch(setTransactions(data.transactions));
     }
@@ -88,7 +87,7 @@ export default function Index() {
       if (page === totalPages) {
         setHasMore(false);
       }
-      console.log(totalPages);
+      // console.log(totalPages);
     } catch (error) {}
   };
 
