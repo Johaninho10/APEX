@@ -136,3 +136,44 @@ export const deleteTransaction = asyncHandler(
     });
   },
 );
+
+export const getSummary = asyncHandler(
+  async (req: Request<{ userId: string }>, res: Response) => {
+    const { userId } = req.params;
+
+    const incomesAggr = await prisma.transaction.aggregate({
+      _sum: {
+        amount: true,
+      },
+      where: {
+        user_id: userId,
+        category: {
+          type: "INCOME",
+        },
+      },
+    });
+
+    const expensesAggr = await prisma.transaction.aggregate({
+      _sum: {
+        amount: true,
+      },
+      where: {
+        user_id: userId,
+        category: {
+          type: "EXPENSE",
+        },
+      },
+    });
+
+    const incomes = incomesAggr._sum.amount || 0;
+    const expenses = expensesAggr._sum.amount || 0;
+    const balance = incomes - expenses;
+
+    res.status(200).json({
+      success: true,
+      incomes,
+      expenses,
+      balance,
+    });
+  },
+);
