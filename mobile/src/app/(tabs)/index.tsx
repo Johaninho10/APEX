@@ -4,6 +4,7 @@ import {
   StyleSheet,
   FlatList,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import { useUser } from "@clerk/expo";
 import * as Icons from "@expo/vector-icons";
@@ -30,6 +31,9 @@ const SKELETON_COLORS = ["#E2E8F0", "#F1F5F9", "#E2E8F0"];
 
 export default function Index() {
   const [showBottomSheet, setShowBottomSheet] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const bottomSheetRef = useRef<BottomSheetMethods>(null);
   const transactions = useSelector(
     (store: Store) => store.transactions.transactions,
@@ -39,7 +43,7 @@ export default function Index() {
   const dispatch = useDispatch();
 
   const { data, isLoading, isFetching, refetch } = useFetchTransactionsQuery(
-    user?.id ?? "",
+    { userId: user?.id ?? "" },
     {
       skip: !user?.id,
     },
@@ -52,6 +56,9 @@ export default function Index() {
 
   useEffect(() => {
     if (data?.success) {
+      console.log(data.transactions);
+      
+      setTotalPages(data.total);
       dispatch(setTransactions(data.transactions));
     }
   }, [data, dispatch]);
@@ -72,6 +79,17 @@ export default function Index() {
         console.error("Failed to delete transaction:", error);
       }
     }
+  };
+
+  const loadMore = async () => {
+    try {
+      if (!hasMore) return;
+      setPage((prev) => prev + 1);
+      if (page === totalPages) {
+        setHasMore(false);
+      }
+      console.log(totalPages);
+    } catch (error) {}
   };
 
   const renderSkeleton = () => {
@@ -205,6 +223,13 @@ export default function Index() {
               : (item?.id ?? String(index))
           }
           ListEmptyComponent={EmptyElement}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            isLoading ? <View className="justify-center w-full">
+              <ActivityIndicator />
+            </View> : <></>
+          }
           ListHeaderComponent={() => (
             <>
               <Header />

@@ -38,6 +38,10 @@ export const getTransactions = asyncHandler(
 
     const take = 10;
 
+    const total = await prisma.transaction.count({
+      where
+    })
+
     const transactions = await prisma.transaction.findMany({
       where,
       include: {
@@ -53,7 +57,7 @@ export const getTransactions = asyncHandler(
     res.status(200).json({
       success: true,
       transactions,
-      total: transactions.length,
+      total,
       page,
     });
   },
