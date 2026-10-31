@@ -47,7 +47,7 @@ const Profile = () => {
                 Toast.show({
                   type: "success",
                   text1: "Transaction Cleared",
-                  text2: `${result.count} transaction${result.count > 1 && "s"} deleted`
+                  text2: `${result.count} transaction${result.count > 1 ? "s" : ""} deleted`
                 })
               }else{
                 throw new Error(result.message)
