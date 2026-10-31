@@ -12,6 +12,8 @@ import { useState } from "react";
 import { useClerk, useUser } from "@clerk/expo";
 import { useClearTransactionsMutation } from "@/redux/services/transactions";
 import Toast from "react-native-toast-message";
+import { useDispatch } from "react-redux";
+import { setTransactions } from "@/redux/features/transactions";
 
 const Profile = () => {
   const [isDark, setIsDark] = useState(false);
@@ -19,6 +21,7 @@ const Profile = () => {
   const [sync, setSync] = useState(false);
   const { signOut } = useClerk();
   const { user } = useUser();
+  const dispatch = useDispatch()
 
   if (!user) {
     return null;
@@ -40,9 +43,7 @@ const Profile = () => {
             text: "Clear",
             style: "destructive",
             onPress: async () => {
-              const result = await clearTransactions(user.id).unwrap();
-              console.log(result);
-              
+              const result = await clearTransactions(user.id).unwrap();              
               if(result.success){
                 Toast.show({
                   type: "success",

@@ -42,8 +42,8 @@ const transactionsApi = createApi({
       query: (userId: string) => ({
         url: `/${userId}`,
         method: "DELETE",
-        invalidateTags: ["transactions", "summary"],
       }),
+      invalidatesTags: ["transactions", "summary"]
     }),
   }),
 });
