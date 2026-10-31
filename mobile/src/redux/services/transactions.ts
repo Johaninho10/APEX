@@ -8,13 +8,20 @@ const transactionsApi = createApi({
   baseQuery: fetchBaseQuery({ baseUrl }),
   endpoints: (build) => ({
     fetchTransactions: build.query({
-      query: ({ userId, page = 1, type }: { userId: string; page?: number, type: "EXPENSE" | "INCOME" | "" }) =>
-        `/${userId}?page=${page}&type=${type}`,
+      query: ({
+        userId,
+        page = 1,
+        type,
+      }: {
+        userId: string;
+        page?: number;
+        type: "EXPENSE" | "INCOME" | "";
+      }) => `/${userId}?page=${page}&type=${type}`,
       providesTags: ["transactions"],
     }),
     getSummary: build.query({
       query: (userId: string) => `/summary/${userId}`,
-      providesTags: ["summary"]
+      providesTags: ["summary"],
     }),
     createTransaction: build.mutation({
       query: ({ userId, body }) => ({
@@ -31,6 +38,13 @@ const transactionsApi = createApi({
       }),
       invalidatesTags: ["transactions", "summary"],
     }),
+    clearTransactions: build.mutation({
+      query: (userId: string) => ({
+        url: `/${userId}`,
+        method: "DELETE",
+        invalidateTags: ["transactions", "summary"],
+      }),
+    }),
   }),
 });
 
@@ -39,6 +53,7 @@ export const {
   useGetSummaryQuery,
   useCreateTransactionMutation,
   useDeleteTransactionMutation,
+  useClearTransactionsMutation,
 } = transactionsApi;
 
 export default transactionsApi;

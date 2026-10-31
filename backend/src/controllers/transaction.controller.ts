@@ -241,7 +241,7 @@ export const clearTransactions = asyncHandler(
     }
 
     res.status(200).json({
-      sucess: true,
+      success: true,
       message: "All transactions have been deleted",
       count
     })

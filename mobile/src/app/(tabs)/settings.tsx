@@ -1,15 +1,69 @@
 import SafeScreen from "@/components/SafeScreen";
-import { Ionicons, FontAwesome, AntDesign, EvilIcons, Entypo } from "@expo/vector-icons";
-import { View, Text, StyleSheet, Switch, TouchableOpacity } from "react-native";
+import {
+  Ionicons,
+  FontAwesome,
+  AntDesign,
+  EvilIcons,
+  Entypo,
+} from "@expo/vector-icons";
+import { View, Text, Alert, Switch, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useState } from "react";
-import { useClerk } from "@clerk/expo";
+import { useClerk, useUser } from "@clerk/expo";
+import { useClearTransactionsMutation } from "@/redux/services/transactions";
+import Toast from "react-native-toast-message";
 
 const Profile = () => {
   const [isDark, setIsDark] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [sync, setSync] = useState(false);
-  const {signOut} = useClerk()
+  const { signOut } = useClerk();
+  const { user } = useUser();
+
+  if (!user) {
+    return null;
+  }
+
+  const [clearTransactions] = useClearTransactionsMutation();
+
+  const handleClearTransactions = () => {
+    try {
+      Alert.alert(
+        "Confirmation",
+        "Do you really want to clear thet transactions ?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+          },
+          {
+            text: "Clear",
+            style: "destructive",
+            onPress: async () => {
+              const result = await clearTransactions(user.id).unwrap();
+              console.log(result);
+              
+              if(result.success){
+                Toast.show({
+                  type: "success",
+                  text1: "Transaction Cleared",
+                  text2: `${result.count} transaction${result.count > 1 && "s"} deleted`
+                })
+              }else{
+                throw new Error(result.message)
+              }
+            },
+          },
+        ],
+      );
+    } catch (error: any) {
+      Toast.show({
+        type: "error",
+        text1: "Couldn't clear transactions",
+        text2: error.message,
+      });
+    }
+  };
 
   return (
     <SafeScreen>
@@ -121,6 +175,7 @@ const Profile = () => {
           <TouchableOpacity
             className="mt-5 flex-row justify-between items-center"
             activeOpacity={0.8}
+            onPress={handleClearTransactions}
           >
             <View className="flex-row items-center gap-x-4">
               <View className="bg-red-500 w-14 h-14 rounded-full justify-center items-center">
@@ -157,6 +212,5 @@ const Profile = () => {
     </SafeScreen>
   );
 };
-
 
 export default Profile;
